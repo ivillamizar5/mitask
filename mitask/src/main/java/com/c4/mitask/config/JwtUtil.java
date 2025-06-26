@@ -57,11 +57,13 @@ public class JwtUtil {
     public String generateToken(UserDetails userDetails, Usuario usuario, Integer clientId) {
         return Jwts.builder()
             .setSubject(userDetails.getUsername())
-            .claim("role", userDetails.getAuthorities().stream().findFirst().map(Object::toString).orElse("USER"))
+            .claim("role", usuario.getRol().getNombre()) // Usar el nombre del rol directamente
             .claim("userId", usuario.getId()) // Añadir el ID del usuario
             .setIssuedAt(new Date())
             .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
             .signWith(SECRET_KEY, SignatureAlgorithm.HS256)
             .compact();
     }
+
+
 }

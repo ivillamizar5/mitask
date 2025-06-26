@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -48,8 +49,8 @@ public class AuthController {
     public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthRequest authRequest) throws Exception {
         try {
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getCorreoElectronico(), authRequest.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(authRequest.getCorreoElectronico(),
+                            authRequest.getPassword()));
         } catch (Exception e) {
             System.out.println("Fallo en autenticación: " + e.getMessage());
             throw new Exception("Credenciales inválidas", e);
@@ -58,23 +59,22 @@ public class AuthController {
         Usuario usuario = usuarioService.findByCorreoElectronico(authRequest.getCorreoElectronico());
         Integer clientId = null;
         String token = jwtUtil.generateToken(userDetails, usuario, clientId);
-        System.out.println("Token generado para: " + authRequest.getCorreoElectronico() + ", Rol: " + userDetails.getAuthorities() + ", UserId: " + usuario.getId() + ", ClientId: " + clientId);
+        System.out.println("Token generado para: " + authRequest.getCorreoElectronico() + ", Rol: "
+                + userDetails.getAuthorities() + ", UserId: " + usuario.getId() + ", ClientId: " + clientId);
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> registerClient(@RequestBody UsuarioRequest usuarioRequest) {
-
         if (usuarioRequest.getRolId() == null || !usuarioRequest.getRolId().equals(2)) {
-            return ResponseEntity.badRequest().body("Solo se permite registrar usuarios con rol Colaborador(ID 2)");
+            return ResponseEntity.badRequest().body("Solo se permite registrar usuarios con rol Colaborador (ID 2)");
         }
 
         try {
-            if (userDetailsService.loadUserByCorreoElectronico(usuarioRequest.getCorreoElectronico()) != null) {
-                return ResponseEntity.badRequest().body("El usuario ya existe");
-            }
-        } catch (Exception e) {
-            // Ignorar si no encuentra el usuario
+            userDetailsService.loadUserByUsername(usuarioRequest.getCorreoElectronico());
+            return ResponseEntity.badRequest().body("El usuario ya existe");
+        } catch (UsernameNotFoundException e) {
+            // Continuar con el registro
         }
 
         Usuario usuario = new Usuario();
@@ -85,8 +85,6 @@ public class AuthController {
         usuario.setRol(rol);
 
         usuario = usuarioService.registrarUsuario(usuario);
-
-
         return ResponseEntity.ok("Registro exitoso. Por favor, inicia sesión.");
     }
 
@@ -110,31 +108,35 @@ public class AuthController {
     }
 
     @DeleteMapping("/admin/usuarios/{id}")
-    public ResponseEntity<Void> eliminarUsuario(@PathVariable Integer id) {
+    public ResponseEntity<Void> eliminarUsuario(@PathVariable Long id) { 
         usuarioService.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/admin/usuarios/{id}")
-    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Integer id, @RequestBody UsuarioRequest usuarioRequest) {
-        Usuario usuarioExistente = usuarioService.findById(id); // Buscar usuario por ID
-        if (usuarioRequest.getUsername() != null) {
-            if (!usuarioRequest.getUsername().equals(usuarioExistente.getCorreoElectronico()) && usuarioRepository.findByCorreoElectronico(usuarioRequest.getCorreoElectronico()).isPresent()) {
-                return ResponseEntity.badRequest().body(null); // Username ya existe
+    public ResponseEntity<Usuario> actualizarUsuario(@PathVariable Long id,
+            @RequestBody UsuarioRequest usuarioRequest) {
+        Usuario usuarioExistente = usuarioService.findById(id);
+        if (usuarioRequest.getCorreoElectronico() != null) {
+            if (!usuarioRequest.getCorreoElectronico().equals(usuarioExistente.getCorreoElectronico()) &&
+                    usuarioRepository.findByCorreoElectronico(usuarioRequest.getCorreoElectronico()).isPresent()) {
+                return ResponseEntity.badRequest().body(null); // Correo ya existe
             }
-            usuarioExistente.setCorreoElectronico(usuarioRequest.getUsername());
+            usuarioExistente.setCorreoElectronico(usuarioRequest.getCorreoElectronico());
         }
-        if (usuarioRequest.getCorreoElectronico() != null) usuarioExistente.setCorreoElectronico(usuarioRequest.getCorreoElectronico());
         if (usuarioRequest.getPassword() != null && !usuarioRequest.getPassword().isEmpty()) {
             usuarioExistente.setPassword(usuarioRequest.getPassword());
         }
         if (usuarioRequest.getRolId() != null) {
             Rol rol = rolRepository.findById(usuarioRequest.getRolId())
                     .orElseThrow(() -> new RuntimeException("Rol no encontrado"));
-            if (rol.getId() == 1 && usuarioExistente.getId() != 1) { // Evitar cambiar rol a Admin excepto para el admin original
+            if (rol.getId() == 1 && usuarioExistente.getId() != 1) { // Evitar cambiar a Admin excepto para el admin
+                                                                     // original
                 return ResponseEntity.badRequest().body(null);
             }
             usuarioExistente.setRol(rol);
         }
+        usuarioService.registrarUsuario(usuarioExistente); // Guardar cambios
+        return ResponseEntity.ok(usuarioExistente);
     }
 }

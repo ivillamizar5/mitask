@@ -35,7 +35,12 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login", "/api/auth/register", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/auth/login", 
+                    "/api/auth/register", 
+                    "/swagger-ui.html", 
+                    "/swagger-ui/**", 
+                    "/v3/api-docs/**",
+                    "/swagger-ui/oauth2-redirect.html").permitAll()
                 .requestMatchers("/api/auth/admin/usuarios","/api/admin/**").hasRole("Administrador")
                 .requestMatchers("/api/proyectos/**").hasAnyRole("Administrador")
                 .requestMatchers("/api/tareas/**").hasAnyRole("Administrador", "Colaborador")
@@ -67,5 +72,10 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }

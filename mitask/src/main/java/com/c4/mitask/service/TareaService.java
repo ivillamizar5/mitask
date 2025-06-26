@@ -3,6 +3,7 @@ package com.c4.mitask.service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.c4.mitask.dto.TareaDTO;
@@ -20,6 +21,9 @@ public class TareaService {
     private final TareaRepository tareaRepository;
     private final ProyectoRepository proyectoRepository;
     private final UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private UsuarioService usuarioService;
 
     public TareaService(TareaRepository tareaRepository, ProyectoRepository proyectoRepository, UsuarioRepository usuarioRepository) {
         this.tareaRepository = tareaRepository;
@@ -111,5 +115,9 @@ public class TareaService {
                     .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
             tarea.setUsuario(usuario);
         }
+    }
+
+    public Usuario findByCorreoElectronico(String correoElectronico) {
+        return usuarioService.findByCorreoElectronico(correoElectronico);
     }
 }

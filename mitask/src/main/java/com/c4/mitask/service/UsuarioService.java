@@ -45,22 +45,22 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-    public Usuario actualizarRol(Integer id, Integer nuevoRolId) {
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
-            Optional<Rol> nuevoRol = rolRepository.findById(nuevoRolId);
-            if (nuevoRol.isEmpty()) {
-                throw new RuntimeException("Rol no encontrado");
-            }
-            usuario.setRol(nuevoRol.get());
-            return usuarioRepository.save(usuario);
-        } else {
-            throw new RuntimeException("Usuario no encontrado");
+    public Usuario actualizarRol(Long id, Integer nuevoRolId) { // Cambiar Integer a Long
+    Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+    if (usuarioOpt.isPresent()) {
+        Usuario usuario = usuarioOpt.get();
+        Optional<Rol> nuevoRol = rolRepository.findById(nuevoRolId);
+        if (nuevoRol.isEmpty()) {
+            throw new RuntimeException("Rol no encontrado");
         }
+        usuario.setRol(nuevoRol.get());
+        return usuarioRepository.save(usuario);
+    } else {
+        throw new RuntimeException("Usuario no encontrado");
     }
+}
 
-    public void eliminarUsuario(Integer id) {
+    public void eliminarUsuario(Long id) { 
         Optional<Usuario> usuario = usuarioRepository.findById(id);
         if (usuario.isEmpty()) {
             throw new IllegalArgumentException("Usuario no encontrado");
@@ -68,11 +68,17 @@ public class UsuarioService {
         if (usuario.get().getRol().getId() == 1) { // rol_id=1 es Administrador
             throw new IllegalStateException("No se puede eliminar un usuario Administrador");
         }
+        usuarioRepository.deleteById(id); // Agregar eliminación
     }
 
-    public List<Usuario> consultarTodosLosUsuarios() {
-        return usuarioRepository.findAll();
+    public Usuario findById(Long id) { 
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
     }
+
+        public List<Usuario> consultarTodosLosUsuarios() {
+            return usuarioRepository.findAll();
+        }
 
     public Usuario findByCorreoElectronico(String correoElectronico) {
         return usuarioRepository.findByCorreoElectronico(correoElectronico)
