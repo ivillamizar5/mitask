@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.c4.mitask.dto.ProyectoDTO;
+import com.c4.mitask.model.Proyecto;
 import com.c4.mitask.service.ProyectoService;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public class ProyectoController {
 
     @Operation(summary = "Obtener todos los proyectos")
     @GetMapping
-    public ResponseEntity<List<ProyectoDTO>> obtenerTodosProyectos() {
+    public ResponseEntity<List<Proyecto>> obtenerTodosProyectos() {
         return ResponseEntity.ok(proyectoService.obtenerTodosProyectos());
     }
 

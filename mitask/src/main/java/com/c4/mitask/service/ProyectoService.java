@@ -42,10 +42,8 @@ public class ProyectoService {
         return mapearADTO(proyecto);
     }
 
-    public List<ProyectoDTO> obtenerTodosProyectos() {
-        return proyectoRepository.findAll().stream()
-                .map(this::mapearADTO)
-                .collect(Collectors.toList());
+    public List<Proyecto> obtenerTodosProyectos() {
+        return proyectoRepository.findAll();
     }
 
     public void eliminarProyecto(Long id) {

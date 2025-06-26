@@ -21,4 +21,8 @@ public class Usuario {
 
     @ManyToMany(mappedBy = "usuarios")
     private Set<Proyecto> proyectos = new HashSet<>();
+
+    @ManyToOne
+    @JoinColumn(name = "rol_id", nullable = false)
+    private Rol rol;
 }
